@@ -9,8 +9,8 @@
 %global gh_owner vincentbernat
 
 Name:     lldpd
-Version:  1.0.4
-Release:  10%{?dist}
+Version:  1.0.18
+Release:  1%{?dist}
 Summary:  ISC-licensed implementation of LLDP
 
 License:  ISC
@@ -156,8 +156,7 @@ fi
 %{_mandir}/man8/lldpcli.8*
 %{_mandir}/man8/lldpctl.8*
 %{_mandir}/man8/%{name}.8*
-%{_libdir}/liblldpctl.so.4
-%{_libdir}/liblldpctl.so.4.8.0
+%{_libdir}/liblldpctl.so.4*
 %dir %{rundir}%{name}
 %dir %{rundir}%{name}/chroot
 %if 0%{?with_systemd}
@@ -176,6 +175,12 @@ fi
 
 
 %changelog
+* Wed Jan 31 2024 Hangbin Liu <haliu@redhat.com> - 1.0.18-1
+- Rebased to 1.0.18 [RHEL-2211]
+
+* Mon Nov 06 2023 Hangbin Liu <haliu@redhat.com> - 1.0.17-1
+- Rebased to 1.0.17 [RHEL-2211, RHEL-5791, RHEL-5796]
+
 * Mon Aug 09 2021 Mohan Boddu <mboddu@redhat.com> - 1.0.4-10
 - Rebuilt for IMA sigs, glibc 2.34, aarch64 flags
   Related: rhbz#1991688
