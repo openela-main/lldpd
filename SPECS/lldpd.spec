@@ -9,7 +9,7 @@
 %global gh_owner vincentbernat
 
 Name:     lldpd
-Version:  1.0.1
+Version:  1.0.17
 Release:  2%{?dist}
 Summary:  ISC-licensed implementation of LLDP
 
@@ -151,8 +151,7 @@ fi
 %{_mandir}/man8/lldpcli.8*
 %{_mandir}/man8/lldpctl.8*
 %{_mandir}/man8/%{name}.8*
-%{_libdir}/liblldpctl.so.4
-%{_libdir}/liblldpctl.so.4.8.0
+%{_libdir}/liblldpctl.so.4*
 %dir %{rundir}%{name}
 %dir %{rundir}%{name}/chroot
 %if 0%{?with_systemd}
@@ -171,6 +170,12 @@ fi
 
 
 %changelog
+* Mon Nov 06 2023 Hangbin Liu <haliu@redhat.com> - 1.0.17-2
+- Fix liblldpctl version [RHEL-2211]
+
+* Mon Nov 06 2023 Hangbin Liu <haliu@redhat.com> - 1.0.17-1
+- Rebased to 1.0.17 [RHEL-2211]
+
 * Thu Aug 09 2018 Josef Ridky <jridky@redhat.com> - 1.0.1-2
 - Rebuild for Net-SNMP
 
