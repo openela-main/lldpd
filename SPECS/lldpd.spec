@@ -1,11 +1,10 @@
 Name:     lldpd
 Version:  1.0.18
-Release:  4%{?dist}
+Release:  6%{?dist}
 Summary:  ISC-licensed implementation of LLDP
 
 License:  ISC
 URL:      https://github.com/lldpd/
-# Upstream https://github.com/lldpd/lldpd/archive/v%{version}/%{name}-%{version}.tar.gz
 Source0:  lldpd-%{version}-free.tar.gz
 Source1:  %{name}.service
 Source2:  %{name}-tmpfiles
@@ -13,6 +12,11 @@ Source3:  %{name}.sysconfig
 Source4:  %{name}-systemd-sysusers.conf
 
 Source100: lldpd-cleanup.sh
+
+Patch1: 0001-client-tx-hold-range.patch
+Patch2: 0002-lldpd-limit-tx-ttl-to-65535.patch
+Patch3: 0003-lldpd-fix-ttl-range.patch
+Patch4: 0004-client-fix-tx-hold.patch
 
 BuildRequires: check-devel
 BuildRequires: gcc
@@ -113,6 +117,15 @@ find %{buildroot} -type f -name "*.la" -delete
 %{_libdir}/pkgconfig/lldpctl.pc
 
 %changelog
+* Mon Dec 9 2024 Hangbin Liu <haliu@redhat.com> - 1.0.18-6
+- Add range checking for tx-interval and tx-hold [RHEL-40245]
+
+* Wed Oct 16 2024 Hangbin Liu <haliu@redhat.com> - 1.0.18-5
+- Add range checking for tx-interval and tx-hold [RHEL-40245]
+
+* Tue Mar 26 2024 Hangbin Liu <haliu@redhat.com> - 1.0.18-4
+- lldpd use systemd-sysusers [RHEL-5787]
+
 * Mon May 20 2024 Hangbin Liu <haliu@redhat.com> - 1.0.18-3
 - Add lldpd-devel package [RHEL-22127]
 

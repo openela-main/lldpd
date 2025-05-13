@@ -1,0 +1,72 @@
+From a73e04f46ebe3d5e9d0805c52b9e5d0472e65069 Mon Sep 17 00:00:00 2001
+From: Hangbin Liu <liuhangbin@gmail.com>
+Date: Wed, 10 Jul 2024 15:49:32 +0800
+Subject: [PATCH 2/2] lldpd: limit tx ttl to 65535
+
+Based on IEEE 802.1AB(2016) 9.2.5.22 txTTL:
+  During normal operation, txTTL is set to whichever is the smaller of the
+  values represented by Equation (1) and Equation (2):
+      (msgTxInterval x msgTxHold) + 1   (1)
+      65535                             (2)
+
+Reported-by: Matt Lucius <malucius@redhat.com>
+Signed-off-by: Hangbin Liu <liuhangbin@gmail.com>
+---
+ src/daemon/client.c | 5 +++--
+ src/daemon/lldpd.c  | 3 ++-
+ 2 files changed, 5 insertions(+), 3 deletions(-)
+
+diff --git a/src/daemon/client.c b/src/daemon/client.c
+index d9d907fd74dc..c4894ac112ea 100644
+--- a/src/daemon/client.c
++++ b/src/daemon/client.c
+@@ -18,6 +18,7 @@
+ #include "lldpd.h"
+ #include "trace.h"
+ 
++#include <sys/param.h>
+ #include <sys/utsname.h>
+ 
+ static ssize_t
+@@ -80,7 +81,7 @@ client_handle_set_configuration(struct lldpd *cfg, enum hmsg_type *type, void *i
+ 			cfg->g_config.c_tx_interval = config->c_tx_interval;
+ 			cfg->g_config.c_ttl =
+ 			    cfg->g_config.c_tx_interval * cfg->g_config.c_tx_hold;
+-			cfg->g_config.c_ttl = (cfg->g_config.c_ttl + 999) / 1000;
++			cfg->g_config.c_ttl = MIN((cfg->g_config.c_ttl + 999) / 1000, 65535);
+ 		}
+ 		levent_send_now(cfg);
+ 	}
+@@ -90,7 +91,7 @@ client_handle_set_configuration(struct lldpd *cfg, enum hmsg_type *type, void *i
+ 		cfg->g_config.c_tx_hold = config->c_tx_hold;
+ 		cfg->g_config.c_ttl =
+ 		    cfg->g_config.c_tx_interval * cfg->g_config.c_tx_hold;
+-		cfg->g_config.c_ttl = (cfg->g_config.c_ttl + 999) / 1000;
++		cfg->g_config.c_ttl = MIN((cfg->g_config.c_ttl + 999) / 1000, 65535);
+ 	}
+ 	if (CHANGED(c_max_neighbors) && config->c_max_neighbors > 0) {
+ 		log_debug("rpc", "client change maximum neighbors to %d",
+diff --git a/src/daemon/lldpd.c b/src/daemon/lldpd.c
+index 6b5721e2e336..c3b67c6dfeb2 100644
+--- a/src/daemon/lldpd.c
++++ b/src/daemon/lldpd.c
+@@ -28,6 +28,7 @@
+ #include <time.h>
+ #include <libgen.h>
+ #include <assert.h>
++#include <sys/param.h>
+ #include <sys/utsname.h>
+ #include <sys/types.h>
+ #include <sys/wait.h>
+@@ -1932,7 +1933,7 @@ lldpd_main(int argc, char *argv[], char *envp[])
+ 	cfg->g_config.c_tx_interval = LLDPD_TX_INTERVAL * 1000;
+ 	cfg->g_config.c_tx_hold = LLDPD_TX_HOLD;
+ 	cfg->g_config.c_ttl = cfg->g_config.c_tx_interval * cfg->g_config.c_tx_hold;
+-	cfg->g_config.c_ttl = (cfg->g_config.c_ttl + 999) / 1000;
++	cfg->g_config.c_ttl = MIN((cfg->g_config.c_ttl + 999) / 1000, 65535);
+ 	cfg->g_config.c_max_neighbors = LLDPD_MAX_NEIGHBORS;
+ #ifdef ENABLE_LLDPMED
+ 	cfg->g_config.c_enable_fast_start = enable_fast_start;
+-- 
+2.46.0
+

@@ -1,0 +1,96 @@
+From 7b9abb819337dd50583350105afbdc82302f00ff Mon Sep 17 00:00:00 2001
+From: Hangbin Liu <liuhangbin@gmail.com>
+Date: Wed, 10 Jul 2024 15:32:01 +0800
+Subject: [PATCH 1/2] client: add range restriction for tx hold and interval
+
+Based on IEEE 802.1AB(2016) 9.2.5. The valid range of tx hold is 1-100,
+the valid range of tx interval is 1-3600.
+
+Reported-by: Matt Lucius <malucius@redhat.com>
+Signed-off-by: Hangbin Liu <liuhangbin@gmail.com>
+---
+ src/client/lldpcli.8.in | 15 ++++++++-------
+ src/lib/atoms/config.c  | 13 +++++++++----
+ 2 files changed, 17 insertions(+), 11 deletions(-)
+
+diff --git a/src/client/lldpcli.8.in b/src/client/lldpcli.8.in
+index 74a07eb4b806..39f936d1ceae 100644
+--- a/src/client/lldpcli.8.in
++++ b/src/client/lldpcli.8.in
+@@ -555,8 +555,8 @@ Force port description to the provided string.
+ .Cd lldp tx-interval Ar interval
+ .Bd -ragged -offset XXXXXX
+ Change transmit delay to the specified value in seconds. The transmit
+-delay is the delay between two transmissions of LLDP PDU. The default
+-value is 30 seconds. Note:
++delay is the delay between two transmissions of LLDP PDU. The valid range
++is 1 through 3600 in seconds. The default value is 30 seconds. Note:
+ .Nm lldpd
+ also starts another system based refresh timer on each port to detect
+ changes such as a hostname. This is the value of the tx-interval
+@@ -576,8 +576,8 @@ system capabilities and CPU speed.
+ .Bd -ragged -offset XXXXXX
+ Change transmit hold value to the specified value. This value is used
+ to compute the TTL of transmitted packets which is the product of this
+-value and of the transmit delay. The default value is 4 and therefore
+-the default TTL is 120 seconds.
++value and of the transmit delay. The valid range is 1 through 100. The
++default value is 4 and therefore the default TTL is 120 seconds.
+ .Ed
+ 
+ .Cd configure
+@@ -676,9 +676,10 @@ to shorten the interval between two LLDPDU.
+ .Cd enable
+ should enable LLDP-MED fast start while
+ .Cd tx-interval
+-specifies the interval between two LLDPDU in seconds. The default
+-interval is 1 second. Once 4 LLDPDU have been sent, the fast start
+-mechanism is disabled until a new neighbor is detected.
++specifies the interval between two LLDPDU in seconds. The valid interval
++range is 1 through 3600 in seconds. The default interval is 1 second. Once
++4 LLDPDU have been sent, the fast start mechanism is disabled until a new
++neighbor is detected.
+ .Ed
+ 
+ .Cd unconfigure med fast-start
+diff --git a/src/lib/atoms/config.c b/src/lib/atoms/config.c
+index 8a4af2e8d1cd..305b5861de6e 100644
+--- a/src/lib/atoms/config.c
++++ b/src/lib/atoms/config.c
+@@ -262,11 +262,13 @@ _lldpctl_atom_set_int_config(lldpctl_atom_t *atom, lldpctl_key_t key, long int v
+ 		break;
+ 	case lldpctl_k_config_tx_interval:
+ 		config.c_tx_interval = value * 1000;
+-		if (value > 0) c->config->c_tx_interval = value * 1000;
++		if (value > 0 && value <= 3600 * 1000)
++			c->config->c_tx_interval = value * 1000;
+ 		break;
+ 	case lldpctl_k_config_tx_interval_ms:
+ 		config.c_tx_interval = value;
+-		if (value > 0) c->config->c_tx_interval = value;
++		if (value > 0 && value <= 3600 * 1000)
++			c->config->c_tx_interval = value;
+ 		break;
+ 	case lldpctl_k_config_ifdescr_update:
+ 		config.c_set_ifdescr = c->config->c_set_ifdescr = value;
+@@ -288,12 +290,15 @@ _lldpctl_atom_set_int_config(lldpctl_atom_t *atom, lldpctl_key_t key, long int v
+ 		config.c_enable_fast_start = c->config->c_enable_fast_start = value;
+ 		break;
+ 	case lldpctl_k_config_fast_start_interval:
+-		config.c_tx_fast_interval = c->config->c_tx_fast_interval = value;
++		config.c_tx_fast_interval = value;
++		if (value > 0 && value <= 3600)
++			c->config->c_tx_fast_interval = value;
+ 		break;
+ #endif
+ 	case lldpctl_k_config_tx_hold:
+ 		config.c_tx_hold = value;
+-		if (value > 0) c->config->c_tx_hold = value;
++		if (value > 0 && value <= 100)
++			c->config->c_tx_hold = value;
+ 		break;
+ 	case lldpctl_k_config_max_neighbors:
+ 		config.c_max_neighbors = value;
+-- 
+2.46.0
+

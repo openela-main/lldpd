@@ -1,0 +1,41 @@
+From 7de43fe8b8993f01422cfc00dfb06bcaf5171eb0 Mon Sep 17 00:00:00 2001
+From: Hangbin Liu <liuhangbin@gmail.com>
+Date: Mon, 2 Dec 2024 14:34:44 +0800
+Subject: [PATCH 4/4] client: fix global tx hold and interval setting
+
+In the following fixed commit, I forgot to fix the transmission (tx) hold
+and interval range in the global configuration setting.
+
+Fixes: 7b9abb819337 ("client: add range restriction for tx hold and interval")
+Reported-by: Fei Liu <feliu@redhat.com>
+Signed-off-by: Hangbin Liu <liuhangbin@gmail.com>
+---
+ src/daemon/client.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/src/daemon/client.c b/src/daemon/client.c
+index 2112bdea6bef..091e1f4e4648 100644
+--- a/src/daemon/client.c
++++ b/src/daemon/client.c
+@@ -75,7 +75,7 @@ client_handle_set_configuration(struct lldpd *cfg, enum hmsg_type *type, void *i
+ 	if (CHANGED(c_tx_interval) && config->c_tx_interval != 0) {
+ 		if (config->c_tx_interval < 0) {
+ 			log_debug("rpc", "client asked for immediate retransmission");
+-		} else {
++		} else if (config->c_tx_interval <= 3600 * 1000) {
+ 			log_debug("rpc", "client change transmit interval to %d ms",
+ 			    config->c_tx_interval);
+ 			cfg->g_config.c_tx_interval = config->c_tx_interval;
+@@ -86,7 +86,8 @@ client_handle_set_configuration(struct lldpd *cfg, enum hmsg_type *type, void *i
+ 		}
+ 		levent_send_now(cfg);
+ 	}
+-	if (CHANGED(c_tx_hold) && config->c_tx_hold > 0) {
++	if (CHANGED(c_tx_hold) && config->c_tx_hold > 0 &&
++	    config->c_tx_hold <= 100) {
+ 		log_debug("rpc", "client change transmit hold to %d",
+ 		    config->c_tx_hold);
+ 		cfg->g_config.c_tx_hold = config->c_tx_hold;
+-- 
+2.39.5 (Apple Git-154)
+
